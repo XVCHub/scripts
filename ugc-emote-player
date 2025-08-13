@@ -1,5 +1,3 @@
---just edited version not mine by Noxious
-
 ----------------------------------------------------------------------------------------------------------------------------
 
 if not game:IsLoaded() then game["Loaded"]:Wait() end
@@ -133,7 +131,7 @@ buttonlayout["Parent"] = buttoncontainer
 local oldbuttons = {}
 
 local animations = {
-	{name = "California\nGirls", id = 124982597491660, speed = 1, timepos = 0},
+	{name = "Shake", id = 136720812089001, speed = 1, timepos = 0},
 	{name = "Helicopter", id = 95301257497525, speed = 1, timepos = 0},
 	{name = "Helicopter 2", id = 122951149300674, speed = 1, timepos = 0},
 	{name = "Helicopter 3", id = 91257498644328, speed = 1, timepos = 0},
@@ -151,6 +149,7 @@ local animations = {
 	{name = "67", id = 115439144505157, speed = 1, timepos = 0},
 	{name = "6", id = 115439144505157, speed = 0, timepos = 0.2},
 	{name = "7", id = 115439144505157, speed = 0, timepos = 1.2},
+	{name = "California\nGirls", id = 124982597491660, speed = 1, timepos = 0},
 	{name = "Dog", id = 78195344190486, speed = 1, timepos = 0},
 	{name = "/e fly", id = 91133306449431, speed = 1, timepos = 0},
     {name = "Flying", id = 138433137191760, speed = 1, timepos = 0},
