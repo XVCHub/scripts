@@ -1,0 +1,218 @@
+--https://rscripts.net/raw/unanchored-fly_1745773171181_EsosnVx0fx.txt
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+IYMouse = LocalPlayer:GetMouse()
+local uis = game:GetService("UserInputService")
+
+if not getgenv().Network then
+	getgenv().Network = {
+		BaseParts = {};
+		FakeConnections = {};
+		Connections = {};
+		Output = {
+			Enabled = true;
+			Prefix = "[NETWORK] ";
+			Send = function(Type,Output,BypassOutput)
+				if typeof(Type) == "function" and (Type == print or Type == warn or Type == error) and typeof(Output) == "string" and (typeof(BypassOutput) == "nil" or typeof(BypassOutput) == "boolean") then
+					if Network["Output"].Enabled == true or BypassOutput == true then
+						Type(Network["Output"].Prefix..Output)
+					end
+				elseif Network["Output"].Enabled == true then
+					error(Network["Output"].Prefix.."Output Send Error : Invalid syntax.")
+				end
+			end;
+		};
+		CharacterRelative = false;
+	}
+
+	Network["Output"].Send(print,": Loading.")
+	Network["Velocity"] = Vector3.new(14.46262424,14.46262424,14.46262424)
+	Network["RetainPart"] = function(Part,ReturnFakePart)
+		assert(typeof(Part) == "Instance" and Part:IsA("BasePart") and Part:IsDescendantOf(workspace),Network["Output"].Prefix.."RetainPart Error : Invalid syntax.")
+		assert(typeof(ReturnFakePart) == "boolean" or typeof(ReturnFakePart) == "nil",Network["Output"].Prefix.."RetainPart Error : Invalid syntax.")
+		if not table.find(Network["BaseParts"],Part) then
+			if Network.CharacterRelative == true then
+				local Character = LocalPlayer.Character
+				if Character and Character.PrimaryPart then
+					if (Character.PrimaryPart.Position-Part.Position).Magnitude > 1000 then
+						Network["Output"].Send(warn,"RetainPart Warning : PartOwnership not applied to "..Part:GetFullName()..".")
+						return false
+					end
+				else
+					Network["Output"].Send(warn,"RetainPart Warning : PrimaryPart does not exist.")
+					return false
+				end
+			end
+			table.insert(Network["BaseParts"],Part)
+			Part.CustomPhysicalProperties = PhysicalProperties.new(0,0,0,0,0)
+			Network["Output"].Send(print,"PartOwnership applied to "..Part:GetFullName()..".")
+			if ReturnFakePart == true then return FakePart end
+		else
+			Network["Output"].Send(warn,"RetainPart Warning : Already active.")
+			return false
+		end
+	end
+
+	Network["RemovePart"] = function(Part)
+		assert(typeof(Part) == "Instance" and Part:IsA("BasePart"),Network["Output"].Prefix.."RemovePart Error : Invalid syntax.")
+		local Index = table.find(Network["BaseParts"],Part)
+		if Index then
+			table.remove(Network["BaseParts"],Index)
+			Network["Output"].Send(print,"PartOwnership removed from "..Part:GetFullName()..".")
+		else
+			Network["Output"].Send(warn,"RemovePart Warning : BasePart not found.")
+		end
+	end
+
+	Network["SuperStepper"] = Instance.new("BindableEvent")
+	for _,Event in pairs({RunService.Stepped,RunService.Heartbeat}) do
+		Event:Connect(function()
+			return Network["SuperStepper"]:Fire(Network["SuperStepper"],tick())
+		end)
+	end
+
+	Network["PartOwnership"] = {}
+	Network["PartOwnership"]["PreMethodSettings"] = {}
+	Network["PartOwnership"]["Enabled"] = false
+	Network["PartOwnership"]["Enable"] = coroutine.create(function()
+		if Network["PartOwnership"]["Enabled"] == false then
+			Network["PartOwnership"]["Enabled"] = true
+			Network["PartOwnership"]["PreMethodSettings"].ReplicationFocus = LocalPlayer.ReplicationFocus
+			LocalPlayer.ReplicationFocus = workspace
+			Network["PartOwnership"]["PreMethodSettings"].SimulationRadius = gethiddenproperty(LocalPlayer,"SimulationRadius")
+			Network["PartOwnership"]["Connection"] = Network["SuperStepper"].Event:Connect(function()
+				sethiddenproperty(LocalPlayer,"SimulationRadius",1/0)
+				for _,Part in pairs(Network["BaseParts"]) do
+					coroutine.wrap(function()
+						if Part:IsDescendantOf(workspace) then
+							if Network.CharacterRelative == true then
+								local Character = LocalPlayer.Character
+								if Character and Character.PrimaryPart then
+									if (Character.PrimaryPart.Position - Part.Position).Magnitude > 1000 then
+										Network["Output"].Send(warn,"PartOwnership Warning : Too far.")
+										Network["RemovePart"](Part)
+									end
+								else
+									Network["Output"].Send(warn,"PartOwnership Warning : PrimaryPart does not exist.")
+								end
+							end
+							Part.Velocity = Network["Velocity"]+Vector3.new(0,math.cos(tick()*10)/100,0)
+						else
+							Network["RemovePart"](Part)
+						end
+					end)()
+				end
+			end)
+			Network["Output"].Send(print,"PartOwnership enabled.")
+		else
+			Network["Output"].Send(warn,"PartOwnership already enabled.")
+		end
+	end)
+
+	Network["PartOwnership"]["Disable"] = coroutine.create(function()
+		if Network["PartOwnership"]["Connection"] then
+			Network["PartOwnership"]["Connection"]:Disconnect()
+			LocalPlayer.ReplicationFocus = Network["PartOwnership"]["PreMethodSettings"].ReplicationFocus
+			sethiddenproperty(LocalPlayer,"SimulationRadius",Network["PartOwnership"]["PreMethodSettings"].SimulationRadius)
+			Network["PartOwnership"]["PreMethodSettings"] = {}
+			for _,Part in pairs(Network["BaseParts"]) do
+				Network["RemovePart"](Part)
+			end
+			Network["PartOwnership"]["Enabled"] = false
+			Network["Output"].Send(print,"PartOwnership disabled.")
+		else
+			Network["Output"].Send(warn,"PartOwnership already disabled.")
+		end
+	end)
+	Network["Output"].Send(print,": Loaded.")
+end
+
+coroutine.resume(Network["PartOwnership"]["Enable"])
+
+IYMouse.Button1Down:Connect(function()
+	object = IYMouse.Target
+	if uis:IsKeyDown(Enum.KeyCode.LeftControl) and object and object.Anchored == false then
+		workspace.CurrentCamera.CameraSubject = object
+		Network.RetainPart(object)
+		LocalPlayer.Character.HumanoidRootPart.Anchored = true
+
+		if flyKeyDown then flyKeyDown:Disconnect() end
+		if flyKeyUp then flyKeyUp:Disconnect() end
+
+		local T = object
+		local CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+		local lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+		local SPEED = 0
+
+		local function FLY()
+			FLYING = true
+			BG = Instance.new('BodyGyro')
+			BV = Instance.new('BodyVelocity')
+			BG.P = 9e4
+			BG.Parent = T
+			BV.Parent = T
+			BG.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+			BG.cframe = T.CFrame
+			BV.velocity = Vector3.new(0, 0, 0)
+			BV.maxForce = Vector3.new(9e9, 9e9, 9e9)
+			task.spawn(function()
+				repeat wait()
+					if CONTROL.L + CONTROL.R ~= 0 or CONTROL.F + CONTROL.B ~= 0 or CONTROL.Q + CONTROL.E ~= 0 then
+						SPEED = 50
+					else
+						SPEED = 0
+					end
+					if (CONTROL.L + CONTROL.R) ~= 0 or (CONTROL.F + CONTROL.B) ~= 0 or (CONTROL.Q + CONTROL.E) ~= 0 then
+						BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (CONTROL.F + CONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(CONTROL.L + CONTROL.R, (CONTROL.F + CONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+						lCONTROL = {F = CONTROL.F, B = CONTROL.B, L = CONTROL.L, R = CONTROL.R}
+					elseif SPEED ~= 0 then
+						BV.velocity = ((workspace.CurrentCamera.CoordinateFrame.lookVector * (lCONTROL.F + lCONTROL.B)) + ((workspace.CurrentCamera.CoordinateFrame * CFrame.new(lCONTROL.L + lCONTROL.R, (lCONTROL.F + lCONTROL.B + CONTROL.Q + CONTROL.E) * 0.2, 0).p) - workspace.CurrentCamera.CoordinateFrame.p)) * SPEED
+					else
+						BV.velocity = Vector3.new(0, 0, 0)
+					end
+					BG.cframe = workspace.CurrentCamera.CoordinateFrame
+				until not FLYING
+				CONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+				lCONTROL = {F = 0, B = 0, L = 0, R = 0, Q = 0, E = 0}
+				SPEED = 0
+				BG:Destroy()
+				BV:Destroy()
+			end)
+		end
+
+		flyKeyDown = IYMouse.KeyDown:Connect(function(KEY)
+			if KEY:lower() == 'w' then CONTROL.F = 1
+			elseif KEY:lower() == 's' then CONTROL.B = -1
+			elseif KEY:lower() == 'a' then CONTROL.L = -1
+			elseif KEY:lower() == 'd' then CONTROL.R = 1
+			elseif KEY:lower() == 'e' then CONTROL.Q = 2
+			elseif KEY:lower() == 'q' then CONTROL.E = -2
+			end
+			pcall(function() workspace.CurrentCamera.CameraType = Enum.CameraType.Track end)
+		end)
+
+		flyKeyUp = IYMouse.KeyUp:Connect(function(KEY)
+			if KEY:lower() == 'w' then CONTROL.F = 0
+			elseif KEY:lower() == 's' then CONTROL.B = 0
+			elseif KEY:lower() == 'a' then CONTROL.L = 0
+			elseif KEY:lower() == 'd' then CONTROL.R = 0
+			elseif KEY:lower() == 'e' then CONTROL.Q = 0
+			elseif KEY:lower() == 'q' then CONTROL.E = 0
+			end
+		end)
+
+		FLY()
+	end
+end)
+
+IYMouse.KeyDown:connect(function()
+	if uis:IsKeyDown(Enum.KeyCode.LeftShift) then
+		FLYING = false
+		if object then Network.RemovePart(object) end
+		if object then object.Velocity = Vector3.new(0, -1, 0) end
+		LocalPlayer.Character.HumanoidRootPart.Anchored = false
+		workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
+	end
+end)
