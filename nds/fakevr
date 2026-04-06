@@ -1,0 +1,23 @@
+local remote = game:GetService("ReplicatedStorage").NexusVRCharacterModel.UpdateInputs
+
+local plr = game:GetService("Players").LocalPlayer
+local char = plr.Character
+local cam = workspace.CurrentCamera
+
+game:GetService("ReplicatedStorage").NexusVRCharacterModel.ReplicationReady:FireServer()
+
+while game:GetService("RunService").RenderStepped:Wait() do
+    if plr.Character == char then
+        local rootCF = char.HumanoidRootPart.CFrame
+        local lookX, lookY, lookZ = cam.CFrame:ToEulerAnglesXYZ()
+        
+        remote:FireServer(
+            CFrame.new(rootCF.Position + Vector3.new(0, 2, 0)) * CFrame.Angles(lookX, lookY, lookZ), 
+            rootCF * CFrame.new(-1.2, 0, -1), 
+            rootCF * CFrame.new(1.2, 0, -1)
+        )
+        task.wait(.0415)
+    else
+        break
+    end
+end
