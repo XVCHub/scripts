@@ -1,4 +1,4 @@
-local HOST = "https://sigmaspy.shie-22-idy.online"
+local HOST = "https://raw.githubusercontent.com/XVCHub/scripts/main/sigmaspy"
 local BYPASS_LIST = { "adonis" }
 local SS_FOLDER = "Sigma spy"
 
