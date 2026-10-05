@@ -8,11 +8,12 @@ just change the () value to true or false
 --]]
 
 local GuiService = game:GetService("GuiService")
-
+print("[pausegameplaynotify] loaded")
 return function(enabled: boolean?)
+	print("[pausegameplaynotify] called:", enabled)
 	if enabled == nil then
 		enabled = not GuiService:GetGameplayPausedNotificationEnabled()
 	end
 	GuiService:SetGameplayPausedNotificationEnabled(enabled)
-	print("GameplayPausedNotification:", GuiService:GetGameplayPausedNotificationEnabled())
+	print("[pausegameplaynotify] result:", GuiService:GetGameplayPausedNotificationEnabled())
 end
