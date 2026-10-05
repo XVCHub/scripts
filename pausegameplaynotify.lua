@@ -7,6 +7,11 @@ disable: loadstring(game:HttpGet("https://raw.githubusercontent.com/XVCHub/scrip
 just change the () value to true or false
 --]]
 
+local GuiService = game:GetService("GuiService")
+
 return function(enabled: boolean?)
-	game:GetService("GuiService"):SetGameplayPausedNotificationEnabled(enabled ~= false)
+	if enabled == nil then
+		enabled = not GuiService:GetGameplayPausedNotificationEnabled()
+	end
+	GuiService:SetGameplayPausedNotificationEnabled(enabled)
 end
