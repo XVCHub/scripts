@@ -14,4 +14,5 @@ return function(enabled: boolean?)
 		enabled = not GuiService:GetGameplayPausedNotificationEnabled()
 	end
 	GuiService:SetGameplayPausedNotificationEnabled(enabled)
+	print("GameplayPausedNotification:", GuiService:GetGameplayPausedNotificationEnabled())
 end
