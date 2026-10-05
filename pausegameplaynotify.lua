@@ -1,18 +1,8 @@
 --[[
-usage:
-default: loadstring(game:HttpGet("https://raw.githubusercontent.com/XVCHub/scripts/main/pausegameplaynotify.lua"))()
-enable: loadstring(game:HttpGet("https://raw.githubusercontent.com/XVCHub/scripts/main/pausegameplaynotify.lua"))(true)
-disable: loadstring(game:HttpGet("https://raw.githubusercontent.com/XVCHub/scripts/main/pausegameplaynotify.lua"))(false)
-
-just change the () value to true or false
+true  = enabled
+false = disabled
 --]]
 
 local GuiService = game:GetService("GuiService")
-print("[pausegameplaynotify] loaded")
 
-return function(enabled)
-	print("[pausegameplaynotify] called:", enabled)
-	if enabled == nil then enabled = not GuiService:GetGameplayPausedNotificationEnabled() end
-	GuiService:SetGameplayPausedNotificationEnabled(enabled)
-	print("[pausegameplaynotify] result:", GuiService:GetGameplayPausedNotificationEnabled())
-end
+GuiService:SetGameplayPausedNotificationEnabled(not GuiService:GetGameplayPausedNotificationEnabled())
