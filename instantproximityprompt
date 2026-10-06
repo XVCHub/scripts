@@ -17,7 +17,7 @@ if existing then
 	return
 end
 
-local state: State = {connections = {},original = {}}
+local state: State = {connections = {}, original = {}}
 getgenv()[KEY] = state
 
 state.connections[1] = ProximityPromptService.PromptShown:Connect(function(prompt: ProximityPrompt)
