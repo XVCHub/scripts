@@ -1,0 +1,104 @@
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+local TextService = game:GetService("TextService")
+
+type State = {
+	connections: {RBXScriptConnection},
+	buttons: {TextButton},
+	heartbeat: RBXScriptConnection?,
+	timer: number,
+	enabled: boolean
+}
+
+local KEY = "__DevConsoleCopy"
+local existing: State? = getgenv()[KEY]
+
+local function cleanup(s: State)
+	s.enabled = false
+	if s.heartbeat then s.heartbeat:Disconnect() end
+	for _, c in s.connections do pcall(function() c:Disconnect() end) end
+	for _, b in s.buttons do pcall(function() if b.Parent then b:Destroy() end end) end
+end
+
+if existing then
+	cleanup(existing)
+	getgenv()[KEY] = nil
+	return
+end
+
+local state: State = { connections = {}, buttons = {}, heartbeat = nil, timer = 0, enabled = true }
+getgenv()[KEY] = state
+
+local function addConn(c: RBXScriptConnection)
+	state.connections[#state.connections + 1] = c
+end
+
+local function attachButton(label: TextLabel)
+	if label:FindFirstChild("CopyBtn") then return end
+	local btn = Instance.new("TextButton")
+	btn.Name = "CopyBtn"
+	btn.Size = UDim2.new(0, 30, 0, 20)
+	btn.BackgroundTransparency = 1
+	btn.Text = "[C]"
+	btn.TextColor3 = label.TextColor3
+	btn.Font = label.Font
+	btn.TextSize = label.TextSize
+	btn.TextTransparency = 0.5
+	btn.TextXAlignment = Enum.TextXAlignment.Left
+	btn.Parent = label
+	state.buttons[#state.buttons + 1] = btn
+	local posconn; posconn = RunService.RenderStepped:Connect(function()
+		if not btn.Parent then posconn:Disconnect() return end
+		local bounds = label.TextBounds
+		if bounds.X <= 0 then return end
+		btn.AnchorPoint = Vector2.new(0, 0.5)
+		if label.Text:find("\n") then
+			local last = label.Text:match("([^\n]*)$")
+			local sz = TextService:GetTextSize(last, label.TextSize, label.Font, Vector2.new(label.AbsoluteSize.X, math.huge))
+			btn.Position = UDim2.new(0, sz.X + 5, 1, -label.TextSize / 2)
+		else
+			btn.Position = UDim2.new(0, bounds.X + 5, 0.5, 0)
+		end
+		posconn:Disconnect()
+	end)
+	addConn(posconn)
+	addConn(btn.MouseEnter:Connect(function() btn.TextTransparency = 0 end))
+	addConn(btn.MouseLeave:Connect(function() btn.TextTransparency = 0.5 end))
+	addConn(btn.MouseButton1Click:Connect(function()
+		local text = label.Text
+		setclipboard(#text > 13 and text:sub(13) or text)
+		btn.Text = "[✓]"
+		task.wait(.3)
+		btn.Text = "[C]"
+	end))
+end
+
+local function scan(root: Instance)
+	for _, d in root:GetDescendants() do
+		if d:IsA("TextLabel") then attachButton(d :: TextLabel) end
+	end
+end
+
+local function setup()
+	local master = CoreGui:FindFirstChild("DevConsoleMaster")
+	local window = master and master:FindFirstChild("DevConsoleWindow")
+	local ui = window and window:FindFirstChild("DevConsoleUI")
+	local main = ui and ui:FindFirstChild("MainView")
+	local log = main and main:FindFirstChild("ClientLog")
+	if not log then return end
+	scan(log)
+	addConn((log :: any).DescendantAdded:Connect(function(d: Instance)
+		if d:IsA("TextLabel") then
+			task.wait(0.05)
+			attachButton(d :: TextLabel)
+		end
+	end))
+end
+
+setup()
+state.heartbeat = RunService.Heartbeat:Connect(function(dt: number)
+	state.timer += dt
+	if state.timer < 1 then return end
+	state.timer = 0
+	if CoreGui:FindFirstChild("DevConsoleMaster") then setup() end
+end)
